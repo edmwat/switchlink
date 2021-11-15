@@ -43,20 +43,19 @@ public class CashService {
 	
 	@Transactional
 	public String transferFunds(FundsTransfer fundsTransfer) {
-		Account sourceAccount = null;
-		Account destAccount = null;
+		Optional<Account> sourceAccount = null;
+		Optional<Account> destAccount = null;
 		String username ="";
 		Object principal = SecurityContextHolder. getContext(). getAuthentication(). getPrincipal();
 		if (principal instanceof UserDetails) {
 			username = ((UserDetails)principal). getUsername();
 		}
 		if(username != "") {
-			sourceAccount = cashRepository.findAccountByUsernameAndAccNumber(username,fundsTransfer.getSourceAcc()).get();
-			destAccount = cashRepository.findAccountByAccNumber(fundsTransfer.getDestinationAcc()).get();
+			sourceAccount = cashRepository.findAccountByUsernameAndAccNumber(username,fundsTransfer.getSourceAcc());
+			destAccount = cashRepository.findAccountByAccNumber(fundsTransfer.getDestinationAcc());
 		
-			if(sourceAccount != null) {
-				//Account theAccount = sourceAccount.get();
-				Double accBalance = sourceAccount.getBalance();
+			if(!sourceAccount.isEmpty()) {
+				Double accBalance = sourceAccount.get().getBalance();
 				
 				if(destAccount == null) {
 					return "Destination account is not valid!";
@@ -64,24 +63,56 @@ public class CashService {
 									
 				if(fundsTransfer.getAmount() < accBalance) {
 					Double srcAccNewBal = accBalance - fundsTransfer.getAmount();
-					sourceAccount.setBalance(srcAccNewBal);
-					cashRepository.save(sourceAccount);	
-					Double destAccNewBal = destAccount.getBalance() + fundsTransfer.getAmount();
-					destAccount.setBalance(destAccNewBal);
-					cashRepository.save(destAccount);	
+					sourceAccount.get().setBalance(srcAccNewBal);
+					cashRepository.save(sourceAccount.get());	
+					Double destAccNewBal = destAccount.get().getBalance() + fundsTransfer.getAmount();
+					destAccount.get().setBalance(destAccNewBal);
+					cashRepository.save(destAccount.get());	
 					
-					return "Funds Transfer successful";	
+					return "Transfered "+fundsTransfer.getAmount()+" from "+fundsTransfer.getSourceAcc() +" To "+fundsTransfer.getDestinationAcc();	
 					
 				}else {
-					return "You dont have enough funds";
+					return "Account "+fundsTransfer.getSourceAcc() +" does not have enough funds";
 				}				
-			}			 
+			}
+			return "Account "+sourceAccount.get().getAccNumber()+" does not exist!";
 		}
-		return "Accounts does not exist!";		
+		return "User "+username+ "does not exist!";		
 	}
 	
-	public AtmWithdrawal atmWithdrawal(AtmWithdrawal atmWithdrawal) {		
-		return null;		
-	}
-	
+	public String atmWithdrawal(AtmWithdrawal atmWithdrawal) {	
+		
+		Optional<Account> sourceAccount = null;
+		Double atmBalance = 3000d;
+		String username ="";
+		
+		Object principal = SecurityContextHolder. getContext(). getAuthentication(). getPrincipal();
+		if (principal instanceof UserDetails) {
+			username = ((UserDetails)principal). getUsername();
+		}
+		if(username != "") {
+			sourceAccount = cashRepository.findAccountByUsernameAndAccNumber(username,atmWithdrawal.getSrcAcc());
+		
+			if(!sourceAccount.isEmpty()) {
+				Double accBalance = sourceAccount.get().getBalance();
+									
+				if(atmWithdrawal.getAmount() < accBalance ) {
+					if(atmWithdrawal.getAmount() > atmBalance) {
+						return "ATM under maintainance!!";
+					}
+					Double srcAccNewBal = accBalance - atmWithdrawal.getAmount();
+					sourceAccount.get().setBalance(srcAccNewBal);
+					cashRepository.save(sourceAccount.get());	
+					atmBalance -= atmWithdrawal.getAmount();
+		
+					return "Withdrawal of Ksh. "+ atmWithdrawal.getAmount() + " From "+atmWithdrawal.getSrcAcc() +" Successful!";	
+					
+				}else {
+					return "You dont have enough funds to withdraw "+atmWithdrawal.getAmount();
+				}				
+			}			
+			return "Accounts "+atmWithdrawal.getSrcAcc() + " does not exist!";
+		}
+		return "User does not exist!";				
+	}	
 }

@@ -28,14 +28,13 @@ public class CashController {
 		return ResponseEntity.ok().body(cashService.getAccountBal(accNo));	
 	} 
 	@PostMapping("/transfer")
-	public ResponseEntity<String> transferFunds(@RequestBody FundsTransfer fundsTransfer) {
-		//return ResponseEntity.ok().body(cashService.getAccountBal("edmwat@gmail.com"));			
+	public ResponseEntity<String> transferFunds(@RequestBody FundsTransfer fundsTransfer) {		
 		return ResponseEntity.ok().body(cashService.transferFunds(fundsTransfer));	
 	}
 	
 	@PostMapping("/atmWithdraw")
-	public ResponseEntity<AtmWithdrawal> atmWithdrawal(@RequestBody AtmWithdrawal atmWithdrawal) {		
-		return ResponseEntity.ok().body(null);		
+	public ResponseEntity<String> atmWithdrawal(@RequestBody AtmWithdrawal atmWithdrawal) {		
+		return ResponseEntity.ok().body(cashService.atmWithdrawal(atmWithdrawal));		
 	} 
 	@PutMapping
 	public ResponseEntity<Account> updateAccount(@RequestBody Account account) {		
