@@ -6,9 +6,8 @@ import lombok.NoArgsConstructor;
 
 @Data
 @AllArgsConstructor
-@NoArgsConstructor
 public class FundsTransfer {
 	private String sourceAcc;
-	private String destinationAccString;
+	private String destinationAcc;
 	private Double amount;
 }
