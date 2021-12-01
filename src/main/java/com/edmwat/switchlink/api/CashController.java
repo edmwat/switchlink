@@ -1,9 +1,11 @@
 package com.edmwat.switchlink.api;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,16 +24,29 @@ import com.edmwat.switchlink.services.CashService;
 public class CashController { 
 	@Autowired
 	private CashService cashService;
-	 
+	
+	@GetMapping("/all/accounts")
+	public ResponseEntity<List<Account>> getAllUserAccounts() {	
+		
+		return ResponseEntity.ok().body(cashService.getAllUserAccounts());	
+	}  
+	
+	
+	@GetMapping("/user/accounts")
+	public ResponseEntity<List<Optional<Account>>> getUserAccounts() {	
+		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!GET ACCOUNTS IS CALLED:::::");
+		return ResponseEntity.ok().body(cashService.getUserAccounts());	
+	}  
+
 	@GetMapping("/balance/{accNo}")
-	public ResponseEntity<Optional<Account>> getAccountBal(@PathVariable String accNo) {		
+	public ResponseEntity<Optional<Account>> getAccountBal(@PathVariable String accNo) {
+		System.out.println("Acc no: "+accNo);
 		return ResponseEntity.ok().body(cashService.getAccountBal(accNo));	
 	} 
 	@PostMapping("/transfer")
 	public ResponseEntity<String> transferFunds(@RequestBody FundsTransfer fundsTransfer) {		
 		return ResponseEntity.ok().body(cashService.transferFunds(fundsTransfer));	
 	}
-	
 	@PostMapping("/atmWithdraw")
 	public ResponseEntity<String> atmWithdrawal(@RequestBody AtmWithdrawal atmWithdrawal) {		
 		return ResponseEntity.ok().body(cashService.atmWithdrawal(atmWithdrawal));		

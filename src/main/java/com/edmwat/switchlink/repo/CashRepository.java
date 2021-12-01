@@ -12,5 +12,9 @@ import com.edmwat.switchlink.models.Account;
 public interface CashRepository extends JpaRepository<Account, Long> {
 	
 	Optional<Account> findAccountByUsernameAndAccNumber(String username,String accountNo);
+	
 	Optional<Account> findAccountByAccNumber(String accountNo);
+	
+	List<Optional<Account>> findAccountByUsername(String username);
+
 }
