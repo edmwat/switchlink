@@ -16,15 +16,22 @@ import com.edmwat.switchlink.models.AccountTransactions;
 import com.edmwat.switchlink.models.AtmWithdrawal;
 import com.edmwat.switchlink.models.FundsTransfer;
 import com.edmwat.switchlink.models.GoogleOAuth2UserInfo;
+import com.edmwat.switchlink.models.TransactionResponse;
 import com.edmwat.switchlink.repo.CashRepository;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Service
 public class CashService {
-	
+	private TransactionResponse transResponse;
 	private final CashRepository cashRepository;
 	
-	public CashService(CashRepository cashRepository) {
+	public CashService(CashRepository cashRepository,
+			TransactionResponse transResponse) {
 		this.cashRepository= cashRepository;
+		this.transResponse =transResponse;
 	}
 	public List<Account> getAllUserAccounts() {	
 		
@@ -98,7 +105,7 @@ public class CashService {
 	}
 	
 	@Transactional
-	public String transferFunds(FundsTransfer fundsTransfer) {
+	public TransactionResponse transferFunds(FundsTransfer fundsTransfer) {
 		Optional<Account> sourceAccount = null;
 		Optional<Account> destAccount = null;
 		String username ="";
@@ -111,11 +118,12 @@ public class CashService {
 			if(!sourceAccount.isEmpty()) {
 				Double accBalance = sourceAccount.get().getBalance();
 				
-				if(destAccount == null) {
-					return "Destination account is not valid!";
+				if(destAccount.isEmpty()) {
+					transResponse.setMessage("Destination account is not valid!");
+					 return transResponse;
 				}
 									
-				if(fundsTransfer.getAmount() < accBalance) {
+				if(fundsTransfer.getAmount() <= accBalance) {
 					Double srcAccNewBal = accBalance - fundsTransfer.getAmount();
 					sourceAccount.get().setBalance(srcAccNewBal);
 					/*sourceAccount.get().getAccountTransactions()
@@ -125,23 +133,27 @@ public class CashService {
 					Double destAccNewBal = destAccount.get().getBalance() + fundsTransfer.getAmount();
 					destAccount.get().setBalance(destAccNewBal);
 					cashRepository.save(destAccount.get());	
-					
-					return "Transfered "+fundsTransfer.getAmount()+" from "+fundsTransfer.getSourceAcc() +" To "+fundsTransfer.getDestinationAcc();	
-					
+					transResponse.setMessage("Transfered "+fundsTransfer.getAmount()+" from "+fundsTransfer.getSourceAcc() +" To "+fundsTransfer.getDestinationAcc());
+					 return transResponse;
 				}else {
-					return "Account "+fundsTransfer.getSourceAcc() +" does not have enough funds";
+					transResponse.setMessage("Account "+fundsTransfer.getSourceAcc() +" does not have enough funds");
+					 return transResponse;
 				}				
-			}
-			return "Account "+sourceAccount.get().getAccNumber()+" does not exist!";
+			}else
+				transResponse.setMessage("Account "+sourceAccount.get().getAccNumber()+" does not exist!");
+			    return transResponse;
 		}
-		return "User "+username+ "does not exist!";		
+			transResponse.setMessage("User "+username+ "does not exist!");	
+			return transResponse;
 	}
 	
 	@Transactional
-	public String atmWithdrawal(AtmWithdrawal atmWithdrawal) {	
+	public TransactionResponse atmWithdrawal(AtmWithdrawal atmWithdrawal) {	
+		//TransactionResponse transResponse = new TransactionResponse();
 		 
 		Optional<Account> sourceAccount = null;
 		Double atmBalance = 5000d;
+		
 		String username = (String) SecurityContextHolder. getContext(). getAuthentication(). getPrincipal();
 		
 		if(username != "") {
@@ -151,22 +163,32 @@ public class CashService {
 				Double accBalance = sourceAccount.get().getBalance();
 									
 				if(atmWithdrawal.getAmount() < accBalance ) {
+					System.out.println("ATM BALANCE::BEFORE::::::::"+atmBalance);
 					if(atmWithdrawal.getAmount() > atmBalance) {
-						return "ATM under maintainance!!";
+						System.out.println("Withdraw amt:"+atmWithdrawal.getAmount() +" atm");
+						 transResponse.setMessage("ATM under maintainance!!");
+						 return transResponse;
 					}
-					Double srcAccNewBal = accBalance - atmWithdrawal.getAmount();
+					Double srcAccNewBal = accBalance - atmWithdrawal.getAmount(); 
 					sourceAccount.get().setBalance(srcAccNewBal);
 					cashRepository.save(sourceAccount.get());	
 					atmBalance -= atmWithdrawal.getAmount();
-		
-					return "Withdrawal of Ksh. "+ atmWithdrawal.getAmount() + " From "+atmWithdrawal.getSrcAcc() +" Successful!";	
+					System.out.println("ATM BALANCE after::::::::::"+atmBalance);
+
+					transResponse.setMessage("Withdrawal of Ksh. "+ atmWithdrawal.getAmount() + " From "+atmWithdrawal.getSrcAcc() +" Successful!");
+					return transResponse;
 					
 				}else {
-					return "You dont have enough funds to withdraw "+atmWithdrawal.getAmount();
+					transResponse.setMessage("You dont have enough funds to withdraw "+atmWithdrawal.getAmount());	
+					return transResponse;
 				}				
-			}			
-			return "Accounts "+atmWithdrawal.getSrcAcc() + " does not exist!";
+			}else			
+				transResponse.setMessage("Accounts "+atmWithdrawal.getSrcAcc() + " does not exist!");
+			    return transResponse;
 		}
-		return "User does not exist!";				
+		  transResponse.setMessage("User does not exist!");		
+		return transResponse;
+		
 	}	
 }
+

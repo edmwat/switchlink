@@ -26,5 +26,6 @@ public class RegistrationService {
 		return appUserService.registerNewUser(user);
 				
 	}
+	
 
 }

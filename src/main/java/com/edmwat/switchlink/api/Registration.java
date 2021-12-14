@@ -1,5 +1,7 @@
 package com.edmwat.switchlink.api;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -8,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.edmwat.switchlink.appUser.PrincipalUser;
+import com.edmwat.switchlink.models.NewPrincipalUser;
 import com.edmwat.switchlink.appUser.AppUserRole;
 import com.edmwat.switchlink.appUser.AppUserService;
 
@@ -26,16 +29,22 @@ public class Registration {
 	}
 	
 	@PostMapping("/add")
-	public String getUser(@RequestBody PrincipalUser appUser) {
+	public ResponseEntity<String> getUser(@RequestBody NewPrincipalUser newUser) {
+		System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!Registration controller");
+		PrincipalUser appUser = new PrincipalUser(newUser.getEmail(),newUser.getPassword(),AppUserRole.USER,true,true,true,true);
 		String usn ="";
-		return userService.registerNewUser(new PrincipalUser(
-				appUser.getUsername(),
-				appUser.getPassword(),
-				AppUserRole.USER,
-				true,
-				true,
-				true,
-				true) );
+		
+		return ResponseEntity.status(HttpStatus.OK).body(
+				userService.registerNewUser(new PrincipalUser(
+						newUser.getEmail(),
+						newUser.getPassword(),
+						AppUserRole.USER,
+						true,
+						true,
+						true,
+						true))
+				);		 
+
 	}
 
 }

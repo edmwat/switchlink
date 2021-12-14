@@ -11,7 +11,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.catalina.connector.Response;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -26,6 +28,8 @@ import com.edmwat.switchlink.appUser.PrincipalUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -37,9 +41,7 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException {
-		System.out.println("<<<<<<<<<<<<<<<<<<<<<<>>>>>>>>>>>>>>>>>>>>>>");	
-		System.out.println("Username: "+request.getParameter("username"));	
-		System.out.println("Password: "+request.getParameter("password"));
+		System.out.println("Authentication filter!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
 		String username = request.getParameter("username");
 		String password = request.getParameter("password");
 		log.info("Username is {} ",username);
@@ -58,14 +60,14 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 		Algorithm algorithm = Algorithm.HMAC256("secret".getBytes());
 		String access_token = JWT.create()
 				.withSubject(user.getUsername())
-				.withExpiresAt(new Date(System.currentTimeMillis() * 10 *60 * 1000))
+				.withExpiresAt(new Date(System.currentTimeMillis() + (2 *60 * 1000)))
 				.withIssuer(request.getRequestURL().toString())
 				.withClaim("roles", user.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.toList()))
 				.sign(algorithm);
 		
 		String refresh_token = JWT.create()
 				.withSubject(user.getUsername())
-				.withExpiresAt(new Date(System.currentTimeMillis() * 30 *60 * 1000))
+				.withExpiresAt(new Date(System.currentTimeMillis() + (60*60*1000)))
 				.withIssuer(request.getRequestURL().toString())
 				.sign(algorithm);
 		
@@ -77,6 +79,18 @@ public class CustomAuthenticationFilter extends UsernamePasswordAuthenticationFi
 		response.setContentType(MediaType.APPLICATION_JSON_VALUE); 
 		
 		new ObjectMapper().writeValue(response.getOutputStream(),tokens);
+		
 	}
+
+	@Override
+	protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response,
+			AuthenticationException failed) throws IOException, ServletException {
+		log.error("Authentication Error ");
+		response.setStatus(401);
+		
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE); 					
+		new ObjectMapper().writeValue(response.getOutputStream(),failed.getMessage());
+	}
+	
 
 }
